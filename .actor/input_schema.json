@@ -107,12 +107,13 @@
             "maximum": 5000
         },
         "dailyBudgetUsd": {
-            "title": "Daily budget (advisory)",
-            "type": "number",
+            "title": "Daily budget in USD (advisory)",
+            "type": "integer",
             "description": "Used only to log a projected-cost warning. It does not hard-stop the run — control spend with the max-jobs fields above and Apify's account limits.",
             "editor": "number",
             "default": 3,
-            "minimum": 0
+            "minimum": 0,
+            "unit": "USD"
         },
         "googleSheetUrl": {
             "title": "Google Sheet URL (optional, informational)",
