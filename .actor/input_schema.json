@@ -101,6 +101,7 @@
         "descriptionSnippetLength": {
             "title": "Job description snippet length (characters)",
             "type": "integer",
+            "description": "How many characters of each job description to keep in the output row. 0 = drop descriptions entirely.",
             "editor": "number",
             "default": 300,
             "minimum": 0,
