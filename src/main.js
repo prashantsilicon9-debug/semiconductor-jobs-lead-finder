@@ -45,7 +45,7 @@ if (Array.isArray(customQueries) && customQueries.filter(Boolean).length) {
 }
 
 if (!queries.length) {
-    await Actor.fail('No search queries to run — select at least one niche or add custom queries.');
+    await Actor.exit({ exitCode: 1, statusMessage: 'No search queries — select at least one niche or add custom queries.' });
 }
 
 log.info('Run configuration', {

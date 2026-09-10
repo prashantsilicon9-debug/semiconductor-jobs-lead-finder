@@ -10,7 +10,9 @@ export const clean = (value) => (typeof value === 'string' ? value.trim() : (val
 
 export const truncate = (value, max) => {
     const text = clean(value).replace(/\s+/g, ' ').trim();
-    if (!max || text.length <= max) return text;
+    if (max == null || max < 0) return text;
+    if (max === 0) return '';
+    if (text.length <= max) return text;
     return `${text.slice(0, max).trim()}…`;
 };
 
