@@ -1,0 +1,133 @@
+{
+    "title": "Semiconductor Jobs Lead Finder",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "niches": {
+            "title": "Niches to search",
+            "type": "array",
+            "description": "Which semiconductor niches to run. Each niche expands into a set of job-title search queries (see 'Custom queries' to override).",
+            "editor": "select",
+            "default": ["DV / Verification", "RTL / PD / STA", "SerDes / Photonics"],
+            "items": {
+                "type": "string",
+                "enum": ["DV / Verification", "RTL / PD / STA", "SerDes / Photonics"],
+                "enumTitles": ["DV / Verification", "RTL / PD / STA", "SerDes / Photonics"]
+            }
+        },
+        "customQueries": {
+            "title": "Custom queries (override niches)",
+            "type": "array",
+            "description": "If set, these job-title search strings are used instead of the niche presets. One search string per line.",
+            "editor": "stringList",
+            "default": []
+        },
+        "sources": {
+            "title": "Job boards to use",
+            "type": "array",
+            "description": "Which underlying Store scrapers to run. Google Jobs also aggregates ZipRecruiter, Dice and many ATS boards.",
+            "editor": "select",
+            "default": ["indeed", "linkedin", "google_jobs"],
+            "items": {
+                "type": "string",
+                "enum": ["indeed", "linkedin", "google_jobs"],
+                "enumTitles": ["Indeed", "LinkedIn Jobs", "Google Jobs (incl. ZipRecruiter, Dice, ATS)"]
+            }
+        },
+        "location": {
+            "title": "Location",
+            "type": "string",
+            "description": "City / state / region to search within, as you would type it on the job board. Leave blank for nationwide US (recommended for a broad net).",
+            "editor": "textfield",
+            "default": ""
+        },
+        "countryCode": {
+            "title": "Country",
+            "type": "string",
+            "description": "ISO-2 country code that scopes the search domains.",
+            "editor": "select",
+            "default": "us",
+            "enum": ["us", "ca", "gb", "au", "in"],
+            "enumTitles": ["United States", "Canada", "United Kingdom", "Australia", "India"]
+        },
+        "datePosted": {
+            "title": "Only jobs posted within",
+            "type": "string",
+            "description": "Recency window. For a daily schedule, keep this at 'Past 24 hours'.",
+            "editor": "select",
+            "default": "past24Hours",
+            "enum": ["past24Hours", "past3Days", "pastWeek"],
+            "enumTitles": ["Past 24 hours", "Past 3 days", "Past week"]
+        },
+        "maxJobsPerQueryPerSource": {
+            "title": "Max jobs per query per source (Indeed & LinkedIn)",
+            "type": "integer",
+            "description": "Cap on results pulled for each search string from Indeed and from LinkedIn. Lower = cheaper. ~60 is plenty for a 24h window on a niche.",
+            "editor": "number",
+            "default": 60,
+            "minimum": 1,
+            "maximum": 1000
+        },
+        "googleMaxItems": {
+            "title": "Max jobs from Google Jobs (total)",
+            "type": "integer",
+            "description": "Hard cap on total Google Jobs results across all queries for this run.",
+            "editor": "number",
+            "default": 200,
+            "minimum": 1,
+            "maximum": 2000
+        },
+        "excludeStaffingAgencies": {
+            "title": "Exclude staffing / recruiting agencies",
+            "type": "boolean",
+            "description": "Drop postings where the hiring company name looks like a staffing firm, recruiter or consultancy (you are one — these are competitors, not clients).",
+            "editor": "checkbox",
+            "default": true
+        },
+        "extraExcludeCompanies": {
+            "title": "Extra company names to exclude",
+            "type": "array",
+            "description": "Additional company-name substrings to filter out (case-insensitive), e.g. your own firm and known competitors.",
+            "editor": "stringList",
+            "default": []
+        },
+        "onlyNewSinceLastRun": {
+            "title": "Output only jobs not seen in previous runs",
+            "type": "boolean",
+            "description": "When ON, the dataset for this run contains only postings first seen today. When OFF, it contains every current match, each flagged is_new true/false. Keep OFF if the Google Sheet integration handles dedup.",
+            "editor": "checkbox",
+            "default": false
+        },
+        "descriptionSnippetLength": {
+            "title": "Job description snippet length (characters)",
+            "type": "integer",
+            "editor": "number",
+            "default": 300,
+            "minimum": 0,
+            "maximum": 5000
+        },
+        "dailyBudgetUsd": {
+            "title": "Daily budget (advisory)",
+            "type": "number",
+            "description": "Used only to log a projected-cost warning. It does not hard-stop the run — control spend with the max-jobs fields above and Apify's account limits.",
+            "editor": "number",
+            "default": 3,
+            "minimum": 0
+        },
+        "googleSheetUrl": {
+            "title": "Google Sheet URL (optional, informational)",
+            "type": "string",
+            "description": "Paste the URL of the Sheet you want rows appended to. Delivery is configured via the Apify → Google Sheets integration on this Actor/task (see README); this field is stored with the run for reference.",
+            "editor": "textfield",
+            "default": ""
+        },
+        "proxyConfiguration": {
+            "title": "Proxy configuration",
+            "type": "object",
+            "description": "Passed through to the Google Jobs scraper. Residential proxy recommended.",
+            "editor": "proxy",
+            "default": { "useApifyProxy": true, "apifyProxyGroups": ["RESIDENTIAL"] }
+        }
+    },
+    "required": []
+}

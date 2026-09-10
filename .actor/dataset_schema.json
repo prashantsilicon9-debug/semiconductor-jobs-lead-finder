@@ -1,0 +1,59 @@
+{
+    "actorSpecification": 1,
+    "views": {
+        "overview": {
+            "title": "Job leads",
+            "transformation": {
+                "fields": [
+                    "posted_date",
+                    "is_new",
+                    "niche",
+                    "job_title",
+                    "company",
+                    "location",
+                    "work_type",
+                    "salary",
+                    "company_website",
+                    "company_linkedin_url",
+                    "company_size",
+                    "job_poster_name",
+                    "job_poster_title",
+                    "source",
+                    "sources_seen",
+                    "search_query",
+                    "apply_url",
+                    "job_description_snippet",
+                    "first_seen",
+                    "date_scraped",
+                    "stable_id"
+                ]
+            },
+            "display": {
+                "component": "table",
+                "properties": {
+                    "posted_date": { "label": "Posted" },
+                    "is_new": { "label": "New" },
+                    "niche": { "label": "Niche" },
+                    "job_title": { "label": "Job title" },
+                    "company": { "label": "Company" },
+                    "location": { "label": "Location" },
+                    "work_type": { "label": "Work type" },
+                    "salary": { "label": "Salary" },
+                    "company_website": { "label": "Company website" },
+                    "company_linkedin_url": { "label": "Company LinkedIn" },
+                    "company_size": { "label": "Company size" },
+                    "job_poster_name": { "label": "Job poster" },
+                    "job_poster_title": { "label": "Poster title" },
+                    "source": { "label": "Source" },
+                    "sources_seen": { "label": "Seen on" },
+                    "search_query": { "label": "Query" },
+                    "apply_url": { "label": "Apply URL" },
+                    "job_description_snippet": { "label": "Description" },
+                    "first_seen": { "label": "First seen" },
+                    "date_scraped": { "label": "Scraped" },
+                    "stable_id": { "label": "ID" }
+                }
+            }
+        }
+    }
+}
