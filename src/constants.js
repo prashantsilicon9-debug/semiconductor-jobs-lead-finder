@@ -1,6 +1,5 @@
 /**
- * Static configuration: niche -> search queries, source Actor ids,
- * date-window mapping per source, and the staffing-agency blocklist.
+ * Static configuration: niche -> search queries, and the staffing-agency blocklist.
  */
 
 export const NICHE_QUERIES = {
@@ -22,33 +21,6 @@ export const NICHE_QUERIES = {
         'high speed SerDes engineer',
         'mixed signal design engineer',
     ],
-};
-
-export const SOURCE_ACTORS = {
-    indeed: 'borderline/indeed-scraper',
-    linkedin: 'curious_coder/linkedin-jobs-scraper',
-    google_jobs: 'gio21/google-jobs-scraper',
-};
-
-/** Higher number = richer record, wins as the base row when merging duplicates. */
-export const SOURCE_RANK = {
-    linkedin: 3,
-    indeed: 2,
-    google_jobs: 1,
-};
-
-/** Our `datePosted` input value -> the value each child Actor expects. */
-export const DATE_POSTED_MAP = {
-    past24Hours: { indeed: '1', linkedin: 'past24Hours', google: 'today' },
-    past3Days: { indeed: '3', linkedin: 'pastWeek', google: '3days' },
-    pastWeek: { indeed: '7', linkedin: 'pastWeek', google: 'week' },
-};
-
-/** Rough per-result cost (USD) of each child Actor, for the advisory budget log. */
-export const SOURCE_UNIT_COST = {
-    indeed: 0.005,
-    linkedin: 0.001,
-    google_jobs: 0.003,
 };
 
 /**

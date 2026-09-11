@@ -22,33 +22,12 @@
             "editor": "stringList",
             "default": []
         },
-        "sources": {
-            "title": "Job boards to use",
-            "type": "array",
-            "description": "Which underlying Store scrapers to run. Google Jobs also aggregates ZipRecruiter, Dice and many ATS boards.",
-            "editor": "select",
-            "default": ["indeed", "linkedin", "google_jobs"],
-            "items": {
-                "type": "string",
-                "enum": ["indeed", "linkedin", "google_jobs"],
-                "enumTitles": ["Indeed", "LinkedIn Jobs", "Google Jobs (incl. ZipRecruiter, Dice, ATS)"]
-            }
-        },
         "location": {
             "title": "Location",
             "type": "string",
-            "description": "City / state / region to search within, as you would type it on the job board. Leave blank for nationwide US (recommended for a broad net).",
+            "description": "City / state / region to search within, as you would type it on LinkedIn. Leave blank for nationwide United States.",
             "editor": "textfield",
             "default": ""
-        },
-        "countryCode": {
-            "title": "Country",
-            "type": "string",
-            "description": "ISO-2 country code that scopes the search domains.",
-            "editor": "select",
-            "default": "us",
-            "enum": ["us", "ca", "gb", "au", "in"],
-            "enumTitles": ["United States", "Canada", "United Kingdom", "Australia", "India"]
         },
         "datePosted": {
             "title": "Only jobs posted within",
@@ -59,23 +38,21 @@
             "enum": ["past24Hours", "past3Days", "pastWeek"],
             "enumTitles": ["Past 24 hours", "Past 3 days", "Past week"]
         },
-        "maxJobsPerQueryPerSource": {
-            "title": "Max jobs per query per source (Indeed & LinkedIn)",
+        "maxJobsPerQuery": {
+            "title": "Max jobs per query",
             "type": "integer",
-            "description": "Cap on results pulled for each search string from Indeed and from LinkedIn. Lower = cheaper. ~60 is plenty for a 24h window on a niche.",
+            "description": "Cap on results pulled for each search string. 25 = one search page. Higher values page further into LinkedIn's results and take proportionally longer.",
             "editor": "number",
-            "default": 60,
+            "default": 25,
             "minimum": 1,
-            "maximum": 1000
+            "maximum": 500
         },
-        "googleMaxItems": {
-            "title": "Max jobs from Google Jobs (total)",
-            "type": "integer",
-            "description": "Hard cap on total Google Jobs results across all queries for this run.",
-            "editor": "number",
-            "default": 200,
-            "minimum": 1,
-            "maximum": 2000
+        "fetchFullDetails": {
+            "title": "Fetch full job details",
+            "type": "boolean",
+            "description": "When ON, each unique posting gets one extra request to its LinkedIn job page for a real description, salary, industry and employment type (via LinkedIn's own structured job data). When OFF, only the search-result card fields are used (title, company, location, posted date) — faster and lighter, but thinner data.",
+            "editor": "checkbox",
+            "default": true
         },
         "excludeStaffingAgencies": {
             "title": "Exclude staffing / recruiting agencies",
@@ -101,20 +78,11 @@
         "descriptionSnippetLength": {
             "title": "Job description snippet length (characters)",
             "type": "integer",
-            "description": "How many characters of each job description to keep in the output row. 0 = drop descriptions entirely.",
+            "description": "How many characters of each job description to keep in the output row. 0 = drop descriptions entirely. Only applies when 'Fetch full job details' is ON.",
             "editor": "number",
             "default": 300,
             "minimum": 0,
             "maximum": 5000
-        },
-        "dailyBudgetUsd": {
-            "title": "Daily budget in USD (advisory)",
-            "type": "integer",
-            "description": "Used only to log a projected-cost warning. It does not hard-stop the run — control spend with the max-jobs fields above and Apify's account limits.",
-            "editor": "number",
-            "default": 3,
-            "minimum": 0,
-            "unit": "USD"
         },
         "googleSheetUrl": {
             "title": "Google Sheet URL (optional, informational)",
@@ -122,13 +90,6 @@
             "description": "Paste the URL of the Sheet you want rows appended to. Delivery is configured via the Apify → Google Sheets integration on this Actor/task (see README); this field is stored with the run for reference.",
             "editor": "textfield",
             "default": ""
-        },
-        "proxyConfiguration": {
-            "title": "Proxy configuration",
-            "type": "object",
-            "description": "Passed through to the Google Jobs scraper. Residential proxy recommended.",
-            "editor": "proxy",
-            "default": { "useApifyProxy": true, "apifyProxyGroups": ["RESIDENTIAL"] }
         }
     },
     "required": []

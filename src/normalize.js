@@ -1,6 +1,6 @@
 /**
- * Turns the wildly different outputs of the three child Actors into one flat,
- * consistent row shape, plus the helpers used for dedup and filtering.
+ * Turns raw LinkedIn card/detail data into one flat, consistent row shape,
+ * plus the helpers used for dedup and filtering.
  */
 
 import { createHash } from 'node:crypto';
@@ -66,7 +66,7 @@ export function toIsoDate(value) {
     return Number.isNaN(direct.getTime()) ? '' : direct.toISOString().slice(0, 10);
 }
 
-/** Stable identity for a posting so "new vs seen" survives across runs and sources. */
+/** Stable identity for a posting so "new vs seen" survives across runs and repeated queries. */
 export function makeDedupeKey(company, title, location) {
     const parts = [company, title, firstCity(location)].map((p) =>
         clean(p).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim());
@@ -82,22 +82,18 @@ function emptyRow(overrides) {
     return {
         niche: '',
         search_query: '',
-        source: '',
-        sources_seen: '',
+        source: 'linkedin',
         job_title: '',
         company: '',
-        company_website: '',
         location: '',
         work_type: '',
+        employment_type: '',
+        industry: '',
         posted_date: '',
         salary: '',
         apply_url: '',
         job_description_snippet: '',
-        job_poster_name: '',
-        job_poster_title: '',
         company_linkedin_url: '',
-        company_size: '',
-        posted_via: '',
         job_id: '',
         stable_id: '',
         dedupe_key: '',
@@ -112,82 +108,27 @@ function finalize(row, { snippetLen }) {
     row.job_description_snippet = truncate(row.job_description_snippet, snippetLen);
     row.dedupe_key = makeDedupeKey(row.company, row.job_title, row.location);
     row.stable_id = row.dedupe_key ? `k:${sha1(row.dedupe_key)}` : `j:${sha1(row.job_id || JSON.stringify(row))}`;
-    if (!row.sources_seen) row.sources_seen = row.source;
     return row;
 }
 
-/* --------------------------- per-source mappers --------------------------- */
-
-export function mapIndeed(item, { niche, query, snippetLen }) {
-    const company = clean(item.companyName);
+/** Map one scraped LinkedIn job card (optionally enriched with detail-page fields) to a row. */
+export function mapLinkedinCard(card, { niche, query, snippetLen }) {
+    const location = clean(card.detailLocation || card.location);
     const row = emptyRow({
         niche,
         search_query: query,
-        source: 'indeed',
-        job_title: clean(item.title),
-        company,
-        company_website: clean(item.companyLinks?.corporateWebsite || item.companyUrl),
-        location: clean(item.location?.formattedAddressShort || item.location?.fullAddress || item.location?.city),
-        work_type: item.isRemote ? 'remote' : detectWorkType(item.title, item.descriptionText),
-        posted_date: toIsoDate(item.datePublished || item.age),
-        salary: clean(item.salary?.salaryText),
-        apply_url: clean(item.applyUrl || item.jobUrl),
-        job_description_snippet: clean(item.descriptionText),
-        company_size: clean(item.companyNumEmployees),
-        job_id: `indeed:${clean(item.jobKey) || clean(item.jobUrl)}`,
-    });
-    if (!row.work_type) row.work_type = 'onsite';
-    return finalize(row, { snippetLen });
-}
-
-export function mapLinkedin(item, { niche, query, snippetLen }) {
-    const company = clean(item.companyName);
-    const row = emptyRow({
-        niche,
-        search_query: query,
-        source: 'linkedin',
-        job_title: clean(item.title),
-        company,
-        company_website: clean(item.companyWebsite),
-        location: clean(item.location),
-        work_type: detectWorkType(item.title, item.location, item.employmentType, item.descriptionText),
-        posted_date: toIsoDate(item.postedAt),
-        salary: clean(item.salary),
-        apply_url: clean(item.applyUrl || item.link),
-        job_description_snippet: clean(item.descriptionText),
-        job_poster_name: clean(item.jobPosterName),
-        job_poster_title: clean(item.jobPosterTitle),
-        company_linkedin_url: clean(item.companyLinkedinUrl),
-        company_size: item.companyEmployeesCount ? String(item.companyEmployeesCount) : '',
-        job_id: `linkedin:${clean(item.id) || clean(item.link)}`,
-    });
-    if (!row.work_type) row.work_type = 'onsite';
-    return finalize(row, { snippetLen });
-}
-
-export function mapGoogle(item, { niche, snippetLen }) {
-    const company = clean(item.companyName);
-    const applyOptions = Array.isArray(item.applyOptions) ? item.applyOptions : [];
-    const preferred = applyOptions.find((o) =>
-        /company|greenhouse|lever|workday|ashby|icims|smartrecruiters|bamboo/i.test(clean(o.network)));
-    const salary = (item.salaryMin || item.salaryMax)
-        ? `${clean(item.salaryCurrency)}${[item.salaryMin, item.salaryMax].filter(Boolean).join('–')}`
-            + `${item.salaryPeriod ? `/${clean(item.salaryPeriod).toLowerCase()}` : ''}`
-        : '';
-    const row = emptyRow({
-        niche,
-        search_query: clean(item.sourceQuery || item.query),
-        source: 'google_jobs',
-        job_title: clean(item.title),
-        company,
-        location: clean(item.location),
-        work_type: item.workFromHome ? 'remote' : detectWorkType(item.title, item.location, item.description),
-        posted_date: toIsoDate(item.postedAtIso || item.postedAt),
-        salary: salary.trim(),
-        apply_url: clean(preferred?.url || applyOptions[0]?.url || item.url),
-        job_description_snippet: clean(item.description),
-        posted_via: clean(item.postedVia),
-        job_id: `google:${clean(item.jobId) || clean(item.url)}`,
+        job_title: clean(card.title),
+        company: clean(card.company),
+        location,
+        work_type: detectWorkType(card.title, location, card.employmentType, card.descriptionText),
+        employment_type: clean(card.employmentType),
+        industry: clean(card.industry),
+        posted_date: toIsoDate(card.postedIso || card.postedRelative),
+        salary: clean(card.salary),
+        apply_url: clean(card.link),
+        job_description_snippet: clean(card.descriptionText),
+        company_linkedin_url: clean(card.companyLinkedinUrl || card.companyUrl),
+        job_id: `linkedin:${clean(card.id) || clean(card.link)}`,
     });
     if (!row.work_type) row.work_type = 'onsite';
     return finalize(row, { snippetLen });
