@@ -2,7 +2,7 @@
     "actorSpecification": 1,
     "name": "semiconductor-jobs-lead-finder",
     "title": "Semiconductor Jobs Lead Finder",
-    "description": "Runs proven Indeed / LinkedIn / Google job scrapers for your semiconductor search terms, then normalizes, dedupes and sorts everything into one clean lead list.",
+    "description": "Native LinkedIn Jobs scraper for your semiconductor search terms — no third-party Actor dependency. Filters staffing agencies, dedupes, tracks new-vs-seen, sorts into one clean lead list.",
     "version": "0.1",
     "meta": {
         "templateId": "js-start"

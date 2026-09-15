@@ -2,7 +2,7 @@
     "name": "semiconductor-jobs-lead-finder",
     "version": "0.1.0",
     "type": "module",
-    "description": "Search-driven job-board scraper for semiconductor staffing lead generation. Composes proven Apify Store scrapers (Indeed, LinkedIn Jobs, Google Jobs) and normalizes, dedupes and sorts the results into one clean lead list.",
+    "description": "Native LinkedIn Jobs scraper for semiconductor staffing lead generation — no third-party Actor dependency. Filters agencies, dedupes, tracks new-vs-seen.",
     "engines": {
         "node": ">=18"
     },
