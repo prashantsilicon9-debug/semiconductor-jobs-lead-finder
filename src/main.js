@@ -1,7 +1,7 @@
 import { Actor, log } from 'apify';
 import { NICHE_QUERIES } from './constants.js';
-import { isStaffingAgency, matchesExcluded } from './normalize.js';
-import { runLinkedin } from './sources.js';
+import { isStaffingAgency, matchesExcluded, isTopCompany } from './normalize.js';
+import { runLinkedin, enrichCompanySizes } from './sources.js';
 
 const SEEN_STORE_KEY = 'SEEN_JOBS';
 const SEEN_TTL_DAYS = 60;
@@ -10,14 +10,17 @@ await Actor.init();
 
 const input = (await Actor.getInput()) ?? {};
 const {
-    niches = Object.keys(NICHE_QUERIES),
+    niches = ['DV / Verification', 'RTL Design', 'Physical Design'],
     customQueries = [],
-    location = '',
+    locations = ['United States', 'Canada'],
     datePosted = 'past24Hours',
     maxJobsPerQuery = 25,
     fetchFullDetails = true,
     excludeStaffingAgencies = true,
     extraExcludeCompanies = [],
+    excludeTopCompanies = true,
+    filterByCompanySize = true,
+    maxCompanySize = 500,
     onlyNewSinceLastRun = false,
     descriptionSnippetLength = 300,
     googleSheetUrl = '',
@@ -40,16 +43,22 @@ if (!queries.length) {
     await Actor.exit({ exitCode: 1, statusMessage: 'No search queries — select at least one niche or add custom queries.' });
 }
 
+const searchCount = queries.length * (locations.length || 1);
 log.info('Run configuration', {
-    niches, queryCount: queries.length, location: location || 'United States',
-    datePosted, maxJobsPerQuery, fetchFullDetails,
+    niches, queryCount: queries.length, locations, totalSearches: searchCount,
+    datePosted, maxJobsPerQuery, fetchFullDetails, excludeTopCompanies, filterByCompanySize, maxCompanySize,
     googleSheetUrl: googleSheetUrl || '(configure via Apify → Google Sheets integration)',
 });
+if (searchCount > 40) {
+    log.warning(`${searchCount} total searches this run (queries × locations) — LinkedIn's guest access can start `
+        + 'getting rate-limited/walled at volume even with pacing. If niches come back empty, try fewer niches '
+        + 'or fewer locations per run rather than one giant sweep.');
+}
 
 /* --------------------------- scrape LinkedIn --------------------------- */
 
 const rawRows = await runLinkedin({
-    queries, location, datePosted, maxJobs: maxJobsPerQuery, fetchFullDetails,
+    queries, locations, datePosted, maxJobs: maxJobsPerQuery, fetchFullDetails,
     snippetLen: descriptionSnippetLength,
 });
 log.info(`Raw rows: ${rawRows.length}`);
@@ -58,13 +67,19 @@ log.info(`Raw rows: ${rawRows.length}`);
 
 let rows = rawRows.filter((r) => r.job_title && r.company);
 
-const beforeFilter = rows.length;
+const beforeAgencyFilter = rows.length;
 if (excludeStaffingAgencies) {
     rows = rows.filter((r) => !isStaffingAgency(r.company, extraExcludeCompanies));
 } else if (extraExcludeCompanies.length) {
     rows = rows.filter((r) => !matchesExcluded(r.company, extraExcludeCompanies));
 }
-const removedByFilter = beforeFilter - rows.length;
+const removedByFilter = beforeAgencyFilter - rows.length;
+
+const beforeTopCompanyFilter = rows.length;
+if (excludeTopCompanies) {
+    rows = rows.filter((r) => !isTopCompany(r.company));
+}
+const removedByTopCompanyFilter = beforeTopCompanyFilter - rows.length;
 
 /* --------------------------- dedupe + merge -------------------------- */
 
@@ -83,6 +98,21 @@ for (const row of rows) {
 }
 let deduped = [...byKey.values()];
 log.info(`Deduped ${rows.length} → ${deduped.length} unique postings`);
+
+/* -------------------- company-size lookup + filter -------------------- */
+
+let removedByCompanySize = 0;
+if (filterByCompanySize && deduped.length) {
+    await enrichCompanySizes(deduped);
+    const sized = deduped.filter((r) => r.company_size_upper != null).length;
+    log.info(`Company size resolved for ${sized}/${deduped.length} postings (rest kept as unknown, not filtered)`);
+    const before = deduped.length;
+    // Unknown size (lookup failed/blocked) passes through — we can't confirm it's
+    // large, so dropping it would just be guessing, and guessing wrong here means
+    // silently losing a legitimate lead.
+    deduped = deduped.filter((r) => r.company_size_upper == null || r.company_size_upper <= maxCompanySize);
+    removedByCompanySize = before - deduped.length;
+}
 
 /* --------------------- new-vs-seen against KV store ------------------ */
 
@@ -128,8 +158,12 @@ await Actor.pushData(output);
 const summary = {
     runDate,
     queriesRun: queries.length,
+    locationsSearched: locations,
+    totalSearches: searchCount,
     rawRows: rawRows.length,
     removedByAgencyFilter: removedByFilter,
+    removedByTopCompanyFilter: removedByTopCompanyFilter,
+    removedByCompanySizeFilter: removedByCompanySize,
     uniquePostings: deduped.length,
     newSinceLastRun: newCount,
     rowsWritten: output.length,

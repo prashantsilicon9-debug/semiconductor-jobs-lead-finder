@@ -6,13 +6,21 @@
         "niches": {
             "title": "Niches to search",
             "type": "array",
-            "description": "Which semiconductor niches to run. Each niche expands into a set of job-title search queries (see 'Custom queries' to override).",
+            "description": "Which hardware-design niches to run. Each niche expands into 3-4 job-title search queries (see 'Custom queries' to override). Picking many niches at once, especially combined with multiple locations, adds up fast — LinkedIn's guest access can start getting rate-limited/walled at high volume even with pacing built in. Prefer a handful per run over one giant sweep.",
             "editor": "select",
-            "default": ["DV / Verification", "RTL / PD / STA", "SerDes / Photonics"],
+            "default": ["DV / Verification", "RTL Design", "Physical Design"],
             "items": {
                 "type": "string",
-                "enum": ["DV / Verification", "RTL / PD / STA", "SerDes / Photonics"],
-                "enumTitles": ["DV / Verification", "RTL / PD / STA", "SerDes / Photonics"]
+                "enum": [
+                    "DV / Verification", "RTL Design", "Physical Design", "STA", "DFT",
+                    "Emulation", "Post-Silicon Validation", "ASIC", "SoC", "SerDes",
+                    "Photonics", "Memory", "HBM", "NVMe", "UCIe"
+                ],
+                "enumTitles": [
+                    "DV / Verification", "RTL Design", "Physical Design", "STA (Static Timing Analysis)",
+                    "DFT (Design for Test)", "Emulation", "Post-Silicon Validation (PSV)", "ASIC",
+                    "SoC", "SerDes", "Photonics", "Memory", "HBM (High Bandwidth Memory)", "NVMe", "UCIe"
+                ]
             }
         },
         "customQueries": {
@@ -22,12 +30,12 @@
             "editor": "stringList",
             "default": []
         },
-        "location": {
-            "title": "Location",
-            "type": "string",
-            "description": "City / state / region to search within, as you would type it on LinkedIn. Leave blank for nationwide United States.",
-            "editor": "textfield",
-            "default": ""
+        "locations": {
+            "title": "Locations to search",
+            "type": "array",
+            "description": "City / state / region / country strings, as you would type each one on LinkedIn. Every search query runs once per location listed here, so two locations roughly doubles the run's length and request volume. Default covers the US and Canada nationwide.",
+            "editor": "stringList",
+            "default": ["United States", "Canada"]
         },
         "datePosted": {
             "title": "Only jobs posted within",
@@ -67,6 +75,28 @@
             "description": "Additional company-name substrings to filter out (case-insensitive), e.g. your own firm and known competitors.",
             "editor": "stringList",
             "default": []
+        },
+        "excludeTopCompanies": {
+            "title": "Exclude well-known large employers",
+            "type": "boolean",
+            "description": "Drop postings from a heuristic list of mega-cap tech, big semiconductor/EDA, and large aerospace/defense companies (Google, Microsoft, Intel, Qualcomm, Lockheed Martin, etc.) — they run their own in-house recruiting and generally aren't a staffing firm's target client. This is a backstop list, not exhaustive; the real size filter is below.",
+            "editor": "checkbox",
+            "default": true
+        },
+        "filterByCompanySize": {
+            "title": "Filter by company size (employee count)",
+            "type": "boolean",
+            "description": "When ON, looks up each unique hiring company's LinkedIn-reported size band and drops postings above 'Max company size'. This is a best-effort lookup — LinkedIn's public company pages are inconsistently accessible (confirmed: a page that loads fine one moment can return a sign-up wall the next, with no clear pattern) — so a company whose size can't be confirmed is kept, not dropped, since guessing it away might mean losing a real lead. Turn OFF to skip the lookup entirely (faster, but no size targeting beyond the 'Exclude well-known large employers' list above).",
+            "editor": "checkbox",
+            "default": true
+        },
+        "maxCompanySize": {
+            "title": "Max company size (employees)",
+            "type": "integer",
+            "description": "Upper bound on employee count for a posting's hiring company, when 'Filter by company size' is ON. LinkedIn reports size in bands (1-10, 11-50, 51-200, 201-500, 501-1,000, ...); 500 keeps everything through the 201-500 band and drops 501+.",
+            "editor": "number",
+            "default": 500,
+            "minimum": 1
         },
         "onlyNewSinceLastRun": {
             "title": "Output only jobs not seen in previous runs",

@@ -4,7 +4,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { STAFFING_AGENCY_KEYWORDS } from './constants.js';
+import { STAFFING_AGENCY_KEYWORDS, TOP_COMPANY_BLOCKLIST } from './constants.js';
 
 export const clean = (value) => (typeof value === 'string' ? value.trim() : (value == null ? '' : String(value)));
 
@@ -38,6 +38,13 @@ export function matchesExcluded(company, extra = []) {
     const name = clean(company).toLowerCase();
     if (!name) return false;
     return extra.map((e) => clean(e).toLowerCase()).filter(Boolean).some((kw) => name.includes(kw));
+}
+
+/** Heuristic check against the mega-cap/well-known-large-employer blocklist. See constants.js. */
+export function isTopCompany(company) {
+    const name = clean(company).toLowerCase();
+    if (!name) return false;
+    return TOP_COMPANY_BLOCKLIST.some((kw) => name.includes(kw));
 }
 
 /** Convert absolute dates OR relative strings ("3 days ago", "Just posted") to YYYY-MM-DD. */
@@ -94,6 +101,9 @@ function emptyRow(overrides) {
         apply_url: '',
         job_description_snippet: '',
         company_linkedin_url: '',
+        company_size_label: '',
+        company_size_upper: null,
+        search_location: '',
         job_id: '',
         stable_id: '',
         dedupe_key: '',
@@ -112,11 +122,12 @@ function finalize(row, { snippetLen }) {
 }
 
 /** Map one scraped LinkedIn job card (optionally enriched with detail-page fields) to a row. */
-export function mapLinkedinCard(card, { niche, query, snippetLen }) {
+export function mapLinkedinCard(card, { niche, query, snippetLen, searchLocation }) {
     const location = clean(card.detailLocation || card.location);
     const row = emptyRow({
         niche,
         search_query: query,
+        search_location: clean(searchLocation),
         job_title: clean(card.title),
         company: clean(card.company),
         location,
